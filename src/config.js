@@ -11,26 +11,27 @@ export const CLINIC = {
 
 // Who works here (including anyone renting the room). Order matters:
 // "Any practitioner" picks the first one who is free.
+// To bring someone back, remove the // at the start of their line and add them to "who" below.
 export const PRACTITIONERS = [
   { id: "lucy", name: "Lucy", role: "Senior Nurse Practitioner" },
-  { id: "vic", name: "Vic", role: "Nurse Prescriber" },
-  { id: "lottie", name: "Lottie", role: "Skin Specialist" },
+  // { id: "vic", name: "Vic", role: "Nurse Prescriber" },
+  // { id: "lottie", name: "Lottie", role: "Skin Specialist" },
 ];
 
 // name must match the button text on the website.
 // deposit is in pence (2500 = £25). who = practitioners who can do it.
 export const TREATMENTS = [
-  { name: "Consultation", mins: 30, deposit: 2500, who: ["lucy", "vic"] },
-  { name: "Anti wrinkle injections", mins: 30, deposit: 2500, who: ["lucy", "vic"] },
+  { name: "Consultation", mins: 30, deposit: 2500, who: ["lucy"] },
+  { name: "Anti wrinkle injections", mins: 30, deposit: 2500, who: ["lucy"] },
   { name: "Dermal fillers", mins: 45, deposit: 2500, who: ["lucy"] },
   { name: "Skin boosters", mins: 45, deposit: 2500, who: ["lucy"] },
   { name: "Polynucleotides", mins: 45, deposit: 2500, who: ["lucy"] },
-  { name: "Chemical peel", mins: 45, deposit: 2500, who: ["lottie"] },
-  { name: "Microneedling", mins: 60, deposit: 2500, who: ["lottie", "lucy"] },
-  { name: "Medical facial", mins: 60, deposit: 2500, who: ["lottie"] },
+  { name: "Chemical peel", mins: 45, deposit: 2500, who: ["lucy"] },
+  { name: "Microneedling", mins: 60, deposit: 2500, who: ["lucy"] },
+  { name: "Medical facial", mins: 60, deposit: 2500, who: ["lucy"] },
   { name: "Membership consultation", mins: 45, deposit: 2500, who: ["lucy"] },
-  { name: "Skin consultation", mins: 20, deposit: 1000, who: ["lottie"] },
-  { name: "Something else", mins: 30, deposit: 2500, who: ["lucy", "vic", "lottie"] },
+  { name: "Skin consultation", mins: 20, deposit: 1000, who: ["lucy"] },
+  { name: "Something else", mins: 30, deposit: 2500, who: ["lucy"] },
 ];
 
 // Opening hours, 24h "HH:MM". Index 0 = Sunday. null = closed.

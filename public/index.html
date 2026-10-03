@@ -138,6 +138,7 @@
     .team div { background: #fff; border-radius: 16px; padding: 20px 22px; display: grid; grid-template-columns: auto 1fr; gap: 0 14px; align-items: center; }
     .av { overflow: hidden; }
     .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .team.solo { grid-template-columns: minmax(0, 460px); }
     .team .av { padding: 0 !important; width: 72px !important; height: 72px !important; border-radius: 50% !important; display: flex !important; }
     .team .av { grid-row: span 3; width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(160deg, #e6d8cf, #c9a79c); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 1.5rem; color: #fff; }
     .team h3 { margin-bottom: 2px; }
@@ -302,7 +303,7 @@
   <div class="trust rv">
     <div class="wrap">
       <div><strong>Nurse led</strong>Every treatment</div>
-      <div><strong>Prescriber</strong>On the team</div>
+      <div><strong>Consultation</strong>Always first</div>
       <div><strong>2018</strong>Qualified nurse</div>
       <div><strong>Rowlands Gill</strong>Gateshead clinic</div>
     </div>
@@ -352,7 +353,7 @@
       <div class="menu rv" data-menu="consult">
         <article><div><h3>Consultation</h3><p>Share your concerns, ask questions and explore the options best suited to you. Required for all new clients and any new treatment.</p><small>Start here if unsure</small></div><a class="book" href="#book" data-pick="Consultation">Book</a></article>
         <article><div><h3>Membership full face consultation</h3><p>A nurse led assessment and personalised plan for anyone interested in The Gemini Collective. £25 deposit, taken off your first payment.</p></div><a class="book" href="#book" data-pick="Membership consultation">Book</a></article>
-        <article><div><h3>Skin consultation</h3><p>Not sure which facial or skin treatment is right for you? Lottie will assess your skin and recommend a plan.</p></div><a class="book" href="#book" data-pick="Skin consultation">Book</a></article>
+        <article><div><h3>Skin consultation</h3><p>Not sure which facial or skin treatment is right for you? Lucy will assess your skin and recommend a plan.</p></div><a class="book" href="#book" data-pick="Skin consultation">Book</a></article>
         <article><div><h3>Group consultation</h3><p>Bring up to six friends. The organiser receives 20% off treatments booked during the appointment.</p><small>Up to 6 people</small></div><a class="book" href="#book" data-pick="Group consultation">Book</a></article>
       </div>
     </div>
@@ -393,8 +394,6 @@
       </div>
       <div class="team rv">
         <div data-staff="lucy"><div class="av">L</div><h3>Lucy</h3><small>Senior Nurse Practitioner &amp; Founder</small><p>Injectables, skin boosters, polynucleotides and all treatment planning.</p></div>
-        <div data-staff="vic"><div class="av">V</div><h3>Vic</h3><small>Nurse Prescriber</small><p>Assesses and prescribes anti wrinkle treatments for all new clients.</p></div>
-        <div data-staff="lottie"><div class="av">L</div><h3>Lottie</h3><small>Skin Specialist</small><p>Medical grade facials, peels and skin consultations.</p></div>
       </div>
     </div>
   </section>
@@ -439,7 +438,7 @@
               <button class="choice" data-v="Microneedling"><b>Microneedling</b><span>60 mins</span></button>
               <button class="choice" data-v="Medical facial"><b>Medical facial</b><span>60 mins</span></button>
               <button class="choice" data-v="Membership consultation"><b>Membership consultation</b><span>Full face plan. £25 deposit.</span></button>
-              <button class="choice" data-v="Skin consultation"><b>Skin consultation</b><span>With Lottie. 20 mins.</span></button>
+              <button class="choice" data-v="Skin consultation"><b>Skin consultation</b><span>20 mins.</span></button>
               <button class="choice" data-v="Something else"><b>Something else</b><span>Tell us in the notes.</span></button>
             </div>
             <div class="bk-nav"><span></span><button class="btn" id="next1" disabled>Continue</button></div>
@@ -452,8 +451,6 @@
             <div class="choices" id="whoChoices">
               <button class="choice wide on" data-v="Any practitioner"><div class="who"><div class="av">G</div><div><b>Any practitioner</b><span>Best availability</span></div></div></button>
               <button class="choice" data-v="Lucy"><div class="who"><div class="av">L</div><div><b>Lucy</b><span>Senior Nurse Practitioner</span></div></div></button>
-              <button class="choice" data-v="Vic"><div class="who"><div class="av">V</div><div><b>Vic</b><span>Nurse Prescriber</span></div></div></button>
-              <button class="choice" data-v="Lottie"><div class="who"><div class="av">L</div><div><b>Lottie</b><span>Skin Specialist</span></div></div></button>
             </div>
             <div class="bk-nav"><button class="back" data-back="1">Back</button><button class="btn" id="next2">Continue</button></div>
           </div>
@@ -537,8 +534,8 @@
       <div class="faq-wrap rv">
         <details><summary>What should I book if I'm unsure?</summary><p>Start with a consultation. We'll assess your skin, talk through what you'd like to achieve and guide you to the right option.</p></details>
         <details><summary>Do I need a consultation before treatment?</summary><p>Yes. All new clients, and anyone trying a new treatment, need a consultation first so we know it's safe and suitable for you.</p></details>
-        <details><summary>Who will I see?</summary><p>Lucy, Senior Nurse Practitioner and founder, carries out injectables and treatment planning. Vic, our Nurse Prescriber, assesses and prescribes anti wrinkle treatments. Lottie, our Skin Specialist, looks after facials and skin treatments.</p></details>
-        <details><summary>I want anti wrinkle injections. What do I need to know?</summary><p>All anti wrinkle treatments have to be assessed and prescribed by a Nurse Prescriber. New clients will have a consultation with Vic before treatment.</p></details>
+        <details><summary>Who will I see?</summary><p>You will see Lucy, Senior Nurse Practitioner and founder, who carries out every treatment and plans your care.</p></details>
+        <details><summary>I want anti wrinkle injections. What do I need to know?</summary><p>All anti wrinkle treatments have to be assessed and prescribed by a prescriber. New clients will have a consultation before treatment.</p></details>
         <details><summary>What is a Membership full face consultation?</summary><p>A nurse led consultation for anyone interested in The Gemini Collective. It includes a full facial assessment, a personalised plan and a chat about membership. A £25 deposit applies and comes off your first payment.</p></details>
         <details><summary>Can I book a treatment without a consultation?</summary><p>Treatment appointments are for existing clients following an agreed plan. If you're not sure, book a consultation.</p></details>
         <details><summary>I still have questions.</summary><p>Message us on Instagram, WhatsApp or email and we'll help you choose.</p></details>
@@ -667,7 +664,8 @@
       var b = e.target.closest('.choice'); if (!b) return;
       pickIn(treatChoices, b); state.note = ''; setTreat(b.dataset.v);
     });
-    $('next1').addEventListener('click', function () { showStep(2); });
+    $('next1').addEventListener('click', function () { showStep(solo() ? 3 : 2); });
+    function solo() { return cfg && cfg.practitioners.length === 1; }
 
     // "Book" links on the menu preselect the treatment
     document.querySelectorAll('[data-pick]').forEach(function (a) {
@@ -853,6 +851,15 @@
 
     fetch('/api/config').then(function (r) { return r.json(); }).then(function (c) {
       cfg = c;
+      // Only one practitioner: skip the "who" step and renumber the steps
+      if (solo()) {
+        state.who = c.practitioners[0].id;
+        sideItems[1].style.display = 'none';
+        sideItems[2].querySelector('i').textContent = '2'; sideItems[3].querySelector('i').textContent = '3';
+        document.querySelector('[data-step="3"] [data-back]').dataset.back = '1';
+        var team = document.querySelector('.team'); if (team) team.classList.add('solo');
+        $('s-who').parentNode.style.display = '';
+      }
       // Show durations and deposits from the settings on each treatment button
       treatChoices.querySelectorAll('.choice').forEach(function (b) {
         var t = c.treatments.find(function (x) { return x.name === b.dataset.v; });
