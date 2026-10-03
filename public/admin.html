@@ -91,6 +91,13 @@
     @media (max-width: 560px) { .appt { grid-template-columns: 70px 1fr; } .appt .acts { grid-column: 2; flex-direction: row; align-items: center; } }
     .up-day { font-family: var(--serif); font-size: 1.3rem; margin: 22px 0 8px; }
 
+    /* profile */
+    .prof { display: grid; grid-template-columns: 240px 1fr; gap: 30px; align-items: start; max-width: 820px; }
+    .prof-photo { aspect-ratio: 1; border-radius: 20px; overflow: hidden; background: linear-gradient(160deg, #e6d8cf, #c9a79c); display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 5rem; color: #fff; }
+    .prof-photo img { width: 100%; height: 100%; object-fit: cover; }
+    @media (max-width: 640px) { .prof { grid-template-columns: 1fr; } .prof > div:first-child { max-width: 240px; } }
+    .ok { color: #4f7d5b !important; }
+
     /* dialogs */
     dialog { border: 0; border-radius: 20px; padding: 0; width: min(440px, calc(100% - 32px)); color: var(--ink); }
     dialog::backdrop { background: rgba(43,39,37,.45); }
@@ -140,6 +147,7 @@
     <div class="tabs">
       <button class="on" data-tab="diary">Diary</button>
       <button data-tab="upcoming">Coming up</button>
+      <button data-tab="profile" id="profileTab">My profile</button>
     </div>
 
     <div id="tab-diary" class="diary">
@@ -155,6 +163,24 @@
     </div>
 
     <div id="tab-upcoming" style="display:none"><div id="upcoming"></div></div>
+
+    <div id="tab-profile" style="display:none">
+      <p class="muted" style="margin-top:0">Your photo and description are shown on the website, on the team section and when clients choose who to book with.</p>
+      <div class="field" id="profWhoWrap" style="display:none;margin-bottom:18px"><label for="profWho">Whose profile?</label><select id="profWho"></select></div>
+      <div class="prof">
+        <div>
+          <div class="prof-photo" id="profPhoto"></div>
+          <label class="btn ghost" style="margin-top:12px;width:100%">Upload a photo<input type="file" id="profFile" accept="image/*" hidden></label>
+          <p class="muted" style="font-size:.8rem;margin:10px 0 0">A clear, friendly photo of your face works best.</p>
+        </div>
+        <form id="profForm">
+          <label class="muted" for="profBio" style="font-size:.8rem;display:block;margin-bottom:6px">About you</label>
+          <textarea id="profBio" rows="7" maxlength="700" placeholder="Your experience, what you love doing, and anything that helps clients feel at ease."></textarea>
+          <p class="err" id="profMsg"></p>
+          <button class="btn">Save description</button>
+        </form>
+      </div>
+    </div>
   </section>
 
   <section class="install">
@@ -237,6 +263,7 @@
     me = r;
     $('loginView').style.display = 'none'; $('appView').style.display = ''; $('logout').style.display = '';
     $('hello').textContent = 'Hi ' + r.name;
+    $('profileTab').textContent = r.owner ? 'Profiles' : 'My profile';
     $('demoNote').innerHTML = r.payments === 'demo' ? '<p class="demo-note">Demo mode: payments are pretend until Stripe is connected.</p>' : '';
     day = cfg.today; view = cfg.today.slice(0, 7);
     loadDay(); loadUpcoming();
@@ -316,7 +343,9 @@
       document.querySelectorAll('.tabs button').forEach(function (x) { x.classList.toggle('on', x === t); });
       $('tab-diary').style.display = t.dataset.tab === 'diary' ? '' : 'none';
       $('tab-upcoming').style.display = t.dataset.tab === 'upcoming' ? '' : 'none';
+      $('tab-profile').style.display = t.dataset.tab === 'profile' ? '' : 'none';
       if (t.dataset.tab === 'upcoming') loadUpcoming();
+      if (t.dataset.tab === 'profile') loadProfile();
     };
   });
 
@@ -360,6 +389,52 @@
     e.preventDefault();
     api('/api/admin/block', { method: 'POST', body: JSON.stringify({ staff: $('blockWho').value, date: day, allDay: $('blockAll').checked, time: $('blockStart').value, mins: $('blockLen').value, reason: $('blockReason').value }) })
       .then(function (r) { if (r.error) { $('blockErr').textContent = r.error; return; } $('blockDlg').close(); refresh(); });
+  };
+
+  // ----- profile -----
+  function profTarget() { return me.owner ? $('profWho').value : me.id; }
+  function profMsg(text, good) { $('profMsg').textContent = text; $('profMsg').classList.toggle('ok', !!good); }
+  function loadProfile() {
+    if (me.owner && !$('profWho').options.length) {
+      $('profWhoWrap').style.display = '';
+      $('profWho').innerHTML = cfg.practitioners.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + '</option>'; }).join('');
+    }
+    return fetch('/api/profiles').then(function (r) { return r.json(); }).then(function (r) {
+      var p = r.practitioners.find(function (x) { return x.id === profTarget(); });
+      $('profBio').value = p.bio || '';
+      $('profPhoto').innerHTML = p.photo ? '<img src="' + p.photo + '" alt="">' : esc(p.name[0]);
+    });
+  }
+  $('profWho').onchange = function () { profMsg(''); loadProfile(); };
+  $('profForm').onsubmit = function (e) {
+    e.preventDefault();
+    api('/api/admin/profile', { method: 'POST', body: JSON.stringify({ staff: profTarget(), bio: $('profBio').value }) })
+      .then(function (r) { profMsg(r.error || 'Saved. It is now showing on the website.', !r.error); });
+  };
+  // Shrink and square the photo on the phone before uploading
+  function shrink(file) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () {
+        var size = 640, s = Math.min(img.width, img.height), c = document.createElement('canvas');
+        c.width = c.height = size;
+        c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
+        c.toBlob(function (b) { b ? resolve(b) : reject(); }, 'image/jpeg', 0.85);
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
+  $('profFile').onchange = function (e) {
+    var f = e.target.files[0]; if (!f) return;
+    profMsg('Uploading photo');
+    shrink(f).then(function (blob) {
+      return fetch('/api/admin/photo?staff=' + profTarget(), { method: 'POST', body: blob, headers: { 'content-type': 'image/jpeg', 'x-staff': who, 'x-pin': pin } }).then(function (r) { return r.json(); });
+    }).then(function (r) {
+      if (r.error) throw new Error(r.error);
+      return loadProfile().then(function () { profMsg('Photo saved. It is now showing on the website.', true); });
+    }).catch(function (err) { profMsg((err && err.message) || 'Could not use that photo. Please try another.'); });
+    e.target.value = '';
   };
 
   // Stay in sync with new bookings

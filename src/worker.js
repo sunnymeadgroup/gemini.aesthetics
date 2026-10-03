@@ -53,6 +53,27 @@ export class Clinic extends DurableObject {
     )`);
   }
 
+  // ----- profiles (photo + description shown on the website) -----
+  profiles() {
+    this.sql.exec("CREATE TABLE IF NOT EXISTS profiles (staff TEXT PRIMARY KEY, bio TEXT NOT NULL DEFAULT '', photo BLOB, updated TEXT)");
+    return this.sql.exec("SELECT staff, bio, updated, photo IS NOT NULL AS hasPhoto FROM profiles").toArray();
+  }
+  setBio(staff, bio) {
+    this.profiles();
+    this.sql.exec(`INSERT INTO profiles (staff, bio, updated) VALUES (?, ?, ?)
+      ON CONFLICT (staff) DO UPDATE SET bio = excluded.bio, updated = excluded.updated`, staff, bio, new Date().toISOString());
+  }
+  setPhoto(staff, bytes) {
+    this.profiles();
+    this.sql.exec(`INSERT INTO profiles (staff, photo, updated) VALUES (?, ?, ?)
+      ON CONFLICT (staff) DO UPDATE SET photo = excluded.photo, updated = excluded.updated`, staff, bytes, new Date().toISOString());
+  }
+  photo(staff) {
+    this.profiles();
+    const r = this.sql.exec("SELECT photo FROM profiles WHERE staff = ?", staff).toArray()[0];
+    return r && r.photo ? r.photo : null;
+  }
+
   // Busy intervals for a practitioner on a day (confirmed, blocked, or held while paying).
   busy(staff, date) {
     const cutoff = new Date(Date.now() - CLINIC.holdMinutes * 60000).toISOString();
@@ -192,9 +213,24 @@ export default {
     if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(request);
     const store = env.CLINIC.get(env.CLINIC.idFromName("clinic"));
     const path = url.pathname;
-    const body = request.method === "POST" ? await request.json().catch(() => ({})) : {};
+    const isJson = (request.headers.get("content-type") || "").includes("application/json");
+    const body = request.method === "POST" && isJson ? await request.json().catch(() => ({})) : {};
 
     // ----- public -----
+    if (path === "/api/profiles") {
+      const rows = await store.profiles();
+      return json({ practitioners: PRACTITIONERS.map((p) => {
+        const r = rows.find((x) => x.staff === p.id);
+        return { ...p, bio: r?.bio || "", photo: r?.hasPhoto ? `/api/photo/${p.id}?v=${encodeURIComponent(r.updated)}` : null };
+      }) });
+    }
+    const photoMatch = path.match(/^\/api\/photo\/([a-z0-9-]+)$/);
+    if (photoMatch) {
+      const bytes = await store.photo(photoMatch[1]);
+      if (!bytes) return new Response("Not found", { status: 404 });
+      return new Response(bytes, { headers: { "content-type": "image/jpeg", "cache-control": "public, max-age=31536000, immutable" } });
+    }
+
     if (path === "/api/config") {
       return json({
         practitioners: PRACTITIONERS,
@@ -309,6 +345,22 @@ export default {
 
       if (path === "/api/admin/me") {
         return json({ id: me.id, name: prac(me.id).name, owner: me.owner, payments: env.STRIPE_SECRET_KEY ? "stripe" : "demo" });
+      }
+
+      if (path === "/api/admin/profile" && request.method === "POST") {
+        const staff = me.owner && prac(body.staff) ? body.staff : me.id;
+        await store.setBio(staff, String(body.bio ?? "").replace(/[\u0000-\u0009\u000b-\u001f]/g, " ").trim().slice(0, 700));
+        return json({ ok: true });
+      }
+
+      if (path === "/api/admin/photo" && request.method === "POST") {
+        const want = url.searchParams.get("staff");
+        const staff = me.owner && prac(want) ? want : me.id;
+        if (!(request.headers.get("content-type") || "").startsWith("image/jpeg")) return json({ error: "Photo must be a JPEG" }, 400);
+        const bytes = await request.arrayBuffer();
+        if (bytes.byteLength > 1_500_000) return json({ error: "Photo is too large" }, 413);
+        await store.setPhoto(staff, bytes);
+        return json({ ok: true });
       }
 
       if (path === "/api/admin/day") {
