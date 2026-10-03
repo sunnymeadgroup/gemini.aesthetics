@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Pay deposit | Gemini Aesthetics</title>
+  <meta name="theme-color" content="#fbf9f6">
+  <link rel="icon" href="/icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap">
+  <style>
+    :root { --ink: #2b2725; --muted: #7d746f; --paper: #fbf9f6; --cream: #f3eee8; --rose: #c9a79c; --rose-dark: #a9857a; --rose-soft: #efe2dc; --line: #e6ddd6; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Inter", system-ui, sans-serif; font-weight: 300; color: var(--ink); background: var(--cream); line-height: 1.6; }
+    .wrap { max-width: 460px; margin: 0 auto; padding: 40px 20px 60px; }
+    .brand { font-family: "Cormorant Garamond", Georgia, serif; font-size: 1.5rem; text-decoration: none; color: var(--ink); display: block; text-align: center; margin-bottom: 24px; }
+    .brand em { color: var(--rose-dark); }
+    .card { background: #fff; border-radius: 22px; padding: 28px; border: 1px solid var(--line); }
+    .demo { background: var(--rose-soft); border-radius: 12px; padding: 12px 14px; font-size: 0.88rem; margin-bottom: 20px; }
+    .demo b { font-weight: 500; }
+    h1 { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 400; font-size: 2rem; margin: 0 0 4px; }
+    .amount { font-family: "Cormorant Garamond", Georgia, serif; font-size: 2.6rem; margin: 6px 0 2px; }
+    .muted { color: var(--muted); font-size: 0.92rem; }
+    .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 0.93rem; gap: 12px; }
+    .row span:first-child { color: var(--muted); }
+    .row span:last-child { text-align: right; }
+    label { display: block; font-size: 0.8rem; color: var(--muted); margin: 16px 0 6px; }
+    input { width: 100%; padding: 14px; border: 1px solid var(--line); border-radius: 12px; font: inherit; font-size: 1rem; background: #fff; color: var(--ink); }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn { display: block; width: 100%; margin-top: 22px; padding: 16px; border-radius: 999px; border: 0; background: var(--ink); color: #fff; font: inherit; font-weight: 500; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; }
+    .btn:hover { background: var(--rose-dark); }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+    .cancel { display: block; text-align: center; margin-top: 16px; color: var(--muted); font-size: 0.88rem; }
+    .err { color: #b0443a; font-size: 0.9rem; margin-top: 12px; min-height: 1em; }
+    .lock { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 14px; font-size: 0.8rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="brand" href="/">Gemini <em>Aesthetics</em></a>
+    <div class="card">
+      <div class="demo"><b>Demo checkout.</b> No money is taken. Once the clinic's Stripe account is connected, this step becomes Stripe's secure payment page.</div>
+      <p class="muted" style="margin:0">Deposit to secure your appointment</p>
+      <div class="amount" id="amount">&nbsp;</div>
+      <p class="muted" style="margin:0 0 16px">Comes off the price of your treatment.</p>
+      <div id="summary"></div>
+
+      <form id="payForm">
+        <label for="card">Card number</label>
+        <input id="card" inputmode="numeric" value="4242 4242 4242 4242" autocomplete="off">
+        <div class="two">
+          <div><label for="exp">Expiry</label><input id="exp" value="12 / 34" autocomplete="off"></div>
+          <div><label for="cvc">CVC</label><input id="cvc" value="123" inputmode="numeric" autocomplete="off"></div>
+        </div>
+        <p class="err" id="err"></p>
+        <button class="btn" id="payBtn" disabled>Pay</button>
+      </form>
+      <a class="cancel" id="cancel" href="/">Cancel and go back</a>
+      <div class="lock">&#128274; Test card details are filled in for the demo</div>
+    </div>
+  </div>
+
+  <script>
+    var q = new URLSearchParams(location.search), id = q.get('b'), token = q.get('t');
+    var back = '/?b=' + encodeURIComponent(id) + '&t=' + encodeURIComponent(token);
+    document.getElementById('cancel').href = back + '&cancelled=1#book';
+    function fmtTime(t) { var h = +t.slice(0, 2); return ((h + 11) % 12 + 1) + ':' + t.slice(3) + (h >= 12 ? 'pm' : 'am'); }
+    function fmtDate(d) { return new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }); }
+
+    fetch('/api/demo-booking?b=' + encodeURIComponent(id) + '&t=' + encodeURIComponent(token)).then(function (r) { return r.json(); }).then(function (r) {
+      if (!r.booking) { document.getElementById('err').textContent = r.error || 'Booking not found. Please start again.'; return; }
+      var b = r.booking;
+      if (b.status === 'confirmed') { location.href = back + '#book'; return; }
+      document.getElementById('amount').textContent = b.deposit;
+      document.getElementById('summary').innerHTML =
+        '<div class="row"><span>Treatment</span><span>' + b.treatment + '</span></div>' +
+        '<div class="row"><span>With</span><span>' + b.staff + '</span></div>' +
+        '<div class="row"><span>When</span><span>' + fmtDate(b.date) + ', ' + fmtTime(b.time) + '</span></div>';
+      var btn = document.getElementById('payBtn'); btn.disabled = false; btn.textContent = 'Pay ' + b.deposit;
+    });
+
+    document.getElementById('payForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var btn = document.getElementById('payBtn'); btn.disabled = true; btn.textContent = 'Processing';
+      fetch('/api/demo-pay', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: id, token: token }) })
+        .then(function (r) { return r.json(); }).then(function (r) {
+          if (r.booking && r.booking.status === 'confirmed') { location.href = back + '#book'; return; }
+          document.getElementById('err').textContent = r.error || 'Payment did not go through. Your time may have expired, please start again.';
+          btn.textContent = 'Pay';
+        });
+    });
+  </script>
+</body>
+</html>

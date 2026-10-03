@@ -1,8 +1,16 @@
 {
   "name": "gemini-aesthetics",
-  "compatibility_date": "2025-01-01",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-09-01",
   "assets": {
-    "directory": "./",
-    "not_found_handling": "404-page"
-  }
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "CLINIC", "class_name": "Clinic" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Clinic"] }],
+  "keep_vars": true
 }
