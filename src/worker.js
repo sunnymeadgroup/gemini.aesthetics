@@ -229,7 +229,30 @@ export default {
 
     // ----- public -----
     if (path === "/api/instagram") {
-      return json({ posts: (await store.getSetting("instagram")) || [] }, 200);
+      // Automatic feed (Behold) if set up, otherwise the hand picked post links.
+      const feed = await store.getSetting("behold");
+      if (feed) {
+        let cache = await store.getSetting("beholdCache");
+        const stale = !cache || Date.now() - cache.at > 4 * 60 * 60 * 1000; // ask Behold at most every 4 hours
+        if (stale) {
+          try {
+            const res = await fetch(feed, { headers: { accept: "application/json" } });
+            if (res.ok) {
+              const data = await res.json();
+              const items = (data.posts || []).slice(0, 9).map((p) => ({
+                url: p.permalink,
+                image: p.sizes?.medium?.mediaUrl || p.sizes?.large?.mediaUrl || p.thumbnailUrl || p.mediaUrl,
+                caption: String(p.prunedCaption || p.caption || "").slice(0, 200),
+                video: p.mediaType === "VIDEO",
+              })).filter((p) => p.url && p.image);
+              cache = { at: Date.now(), items };
+              await store.setSetting("beholdCache", cache);
+            }
+          } catch (e) { /* keep the last good copy */ }
+        }
+        if (cache && cache.items.length) return json({ mode: "auto", items: cache.items });
+      }
+      return json({ mode: "manual", posts: (await store.getSetting("instagram")) || [] });
     }
 
     if (path === "/api/profiles") {
@@ -392,13 +415,21 @@ export default {
         return json({ counts: await store.monthCounts(month, me.owner ? null : me.id) });
       }
 
+      if (path === "/api/admin/instagram-settings") {
+        return json({ posts: (await store.getSetting("instagram")) || [], feed: (await store.getSetting("behold")) || "" });
+      }
+
       if (path === "/api/admin/instagram" && request.method === "POST") {
         if (!me.owner) return json({ error: "Only the Clinic login can change this" }, 403);
         const posts = String(body.posts || "").split(/\s+/)
           .map((u) => u.trim().match(/^https:\/\/(www\.)?instagram\.com\/(p|reel)\/([A-Za-z0-9_-]+)/))
           .filter(Boolean).map((m) => `https://www.instagram.com/${m[2]}/${m[3]}/`).slice(0, 9);
         await store.setSetting("instagram", posts);
-        return json({ ok: true, posts });
+        const feedLink = String(body.feed || "").trim().match(/^https:\/\/feeds\.behold\.so\/[A-Za-z0-9_-]+$/);
+        await store.setSetting("behold", feedLink ? feedLink[0] : null);
+        await store.setSetting("beholdCache", null);
+        if (body.feed && !feedLink) return json({ error: "That feed link does not look right. It should start with https://feeds.behold.so/" }, 400);
+        return json({ ok: true, posts, feed: feedLink ? feedLink[0] : "" });
       }
 
       if (path === "/api/admin/stats") {

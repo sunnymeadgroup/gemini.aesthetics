@@ -214,8 +214,12 @@
       </div>
       <div id="instaBox" style="display:none;margin-top:40px;max-width:820px">
         <h2 style="font-size:1.8rem">Instagram posts on the website</h2>
-        <p class="muted" style="margin-top:0">Paste up to 9 Instagram post links, one per line. On Instagram, tap the three dots on a post, then <b>Copy link</b>. Shown in this order.</p>
-        <textarea id="instaPosts" rows="6" placeholder="https://www.instagram.com/p/..."></textarea>
+        <label class="muted" for="instaFeed" style="font-size:.8rem;display:block;margin:0 0 6px">Automatic feed link (from Behold)</label>
+        <input id="instaFeed" placeholder="https://feeds.behold.so/...">
+        <p class="muted" style="font-size:.85rem;margin:8px 0 22px">With this set, her latest posts show automatically and update during the day. Leave it empty to choose posts by hand below.</p>
+        <label class="muted" for="instaPosts" style="font-size:.8rem;display:block;margin:0 0 6px">Or pick posts by hand (used when there is no feed link)</label>
+        <p class="muted" style="margin-top:0;font-size:.85rem">Paste up to 9 post links, one per line. On Instagram, tap the three dots on a post, then <b>Copy link</b>.</p>
+        <textarea id="instaPosts" rows="5" placeholder="https://www.instagram.com/p/..."></textarea>
         <p class="err" id="instaMsg"></p>
         <button class="btn" id="instaSave">Save posts</button>
       </div>
@@ -516,12 +520,12 @@
   function loadInsta() {
     if (!me.owner) return;
     $('instaBox').style.display = '';
-    fetch('/api/instagram').then(function (r) { return r.json(); }).then(function (r) { $('instaPosts').value = (r.posts || []).join('\n'); });
+    api('/api/admin/instagram-settings').then(function (r) { $('instaPosts').value = (r.posts || []).join('\n'); $('instaFeed').value = r.feed || ''; });
   }
   $('instaSave').onclick = function () {
-    api('/api/admin/instagram', { method: 'POST', body: JSON.stringify({ posts: $('instaPosts').value }) }).then(function (r) {
+    api('/api/admin/instagram', { method: 'POST', body: JSON.stringify({ posts: $('instaPosts').value, feed: $('instaFeed').value }) }).then(function (r) {
       $('instaMsg').classList.toggle('ok', !r.error);
-      $('instaMsg').textContent = r.error || (r.posts.length ? 'Saved ' + r.posts.length + ' post' + (r.posts.length === 1 ? '' : 's') + '. They are now on the website.' : 'Saved. No posts, so the website shows a link to Instagram instead.');
+      $('instaMsg').textContent = r.error || (r.feed ? 'Saved. Her latest posts now show automatically.' : r.posts.length ? 'Saved ' + r.posts.length + ' post' + (r.posts.length === 1 ? '' : 's') + '. They are now on the website.' : 'Saved. No posts, so the website shows a link to Instagram instead.');
       if (!r.error) $('instaPosts').value = r.posts.join('\n');
     });
   };

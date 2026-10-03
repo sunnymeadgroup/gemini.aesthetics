@@ -31,6 +31,17 @@ export const TREATMENTS = [
   { name: "Medical facial", mins: 60, deposit: 2500, who: ["lucy"] },
   { name: "Membership consultation", mins: 45, deposit: 2500, who: ["lucy"] },
   { name: "Skin consultation", mins: 20, deposit: 1000, who: ["lucy"] },
+  { name: "Gummy smile treatment", mins: 30, deposit: 2500, who: ["lucy"] },
+  { name: "Filler dissolve", mins: 30, deposit: 2500, who: ["lucy"] },
+  { name: "Medi Facial", mins: 60, deposit: 2500, who: ["lucy"] },
+  { name: "Bright and Even Peel", mins: 45, deposit: 2500, who: ["lucy"] },
+  { name: "Deep Pore Peel", mins: 45, deposit: 2500, who: ["lucy"] },
+  { name: "Pigment Correct Peel", mins: 45, deposit: 2500, who: ["lucy"] },
+  { name: "NoPeel Peel", mins: 45, deposit: 2500, who: ["lucy"] },
+  { name: "Microneedling Facial", mins: 60, deposit: 2500, who: ["lucy"] },
+  { name: "Nurturing Facial", mins: 60, deposit: 2500, who: ["lucy"] },
+  { name: "Pregnancy safe facial", mins: 60, deposit: 2500, who: ["lucy"] },
+  { name: "Group consultation", mins: 60, deposit: 2500, who: ["lucy"] },
   { name: "Something else", mins: 30, deposit: 2500, who: ["lucy"] },
 ];
 
