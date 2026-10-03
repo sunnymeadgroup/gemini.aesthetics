@@ -1,5 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
-import { CLINIC, PRACTITIONERS, TREATMENTS, HOURS } from "./config.js";
+import { CLINIC, PRACTITIONERS, TREATMENTS, HOURS, PRICES } from "./config.js";
 
 // ---------- time helpers (clinic local time) ----------
 
@@ -51,6 +51,17 @@ export class Clinic extends DurableObject {
       cancel_reason TEXT,
       created TEXT NOT NULL
     )`);
+  }
+
+  // ----- simple settings (Instagram posts etc) -----
+  getSetting(key) {
+    this.sql.exec("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)");
+    const r = this.sql.exec("SELECT value FROM settings WHERE key = ?", key).toArray()[0];
+    return r ? JSON.parse(r.value) : null;
+  }
+  setSetting(key, value) {
+    this.sql.exec("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)");
+    this.sql.exec("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value", key, JSON.stringify(value));
   }
 
   // ----- profiles (photo + description shown on the website) -----
@@ -184,16 +195,16 @@ async function stripe(env, path, params, method = "POST") {
 }
 
 // ---------- staff logins ----------
-// Each person has their own PIN. Lucy is the owner and sees everyone.
-// Set real PINs in Cloudflare (Settings > Variables and Secrets): PIN_LUCY, PIN_VIC, PIN_LOTTIE
-const OWNER = "lucy";
-const DEMO_PINS = { lucy: "1111", vic: "2222", lottie: "3333" };
+// Each person has their own PIN and sees only their own diary.
+// The "shop" login is for the clinic computer and sees everyone.
+// Set real PINs in Cloudflare (Settings > Variables and Secrets): PIN_SHOP, PIN_LUCY, PIN_VIC, PIN_LOTTIE
+const DEMO_PINS = { shop: "1234", lucy: "1111", vic: "2222", lottie: "3333" };
 function login(request, env) {
   const id = request.headers.get("x-staff") || "";
-  if (!prac(id)) return null;
+  if (id !== "shop" && !prac(id)) return null;
   const pin = env[`PIN_${id.toUpperCase()}`] || DEMO_PINS[id];
   if (!pin || request.headers.get("x-pin") !== pin) return null;
-  return { id, owner: id === OWNER };
+  return { id, owner: id === "shop" };
 }
 
 // ---------- HTTP ----------
@@ -217,6 +228,10 @@ export default {
     const body = request.method === "POST" && isJson ? await request.json().catch(() => ({})) : {};
 
     // ----- public -----
+    if (path === "/api/instagram") {
+      return json({ posts: (await store.getSetting("instagram")) || [] }, 200);
+    }
+
     if (path === "/api/profiles") {
       const rows = await store.profiles();
       return json({ practitioners: PRACTITIONERS.map((p) => {
@@ -234,7 +249,8 @@ export default {
     if (path === "/api/config") {
       return json({
         practitioners: PRACTITIONERS,
-        treatments: TREATMENTS.map((t) => ({ name: t.name, mins: t.mins, deposit: money(t.deposit), who: t.who })),
+        treatments: TREATMENTS.map((t) => ({ name: t.name, mins: t.mins, deposit: money(t.deposit), who: t.who, price: PRICES[t.name] || "" })),
+        prices: PRICES,
         hours: HOURS, today: londonNow().date, daysAhead: CLINIC.daysAhead,
         payments: env.STRIPE_SECRET_KEY ? "stripe" : "demo",
       });
@@ -344,7 +360,7 @@ export default {
       const mine = (rows) => (me.owner ? rows : rows.filter((b) => b.staff === me.id));
 
       if (path === "/api/admin/me") {
-        return json({ id: me.id, name: prac(me.id).name, owner: me.owner, payments: env.STRIPE_SECRET_KEY ? "stripe" : "demo" });
+        return json({ id: me.id, name: me.owner ? "Clinic" : prac(me.id).name, owner: me.owner, payments: env.STRIPE_SECRET_KEY ? "stripe" : "demo" });
       }
 
       if (path === "/api/admin/profile" && request.method === "POST") {
@@ -374,6 +390,26 @@ export default {
         const month = url.searchParams.get("month") || "";
         if (!/^\d{4}-\d{2}$/.test(month)) return json({ error: "Bad month" }, 400);
         return json({ counts: await store.monthCounts(month, me.owner ? null : me.id) });
+      }
+
+      if (path === "/api/admin/instagram" && request.method === "POST") {
+        if (!me.owner) return json({ error: "Only the Clinic login can change this" }, 403);
+        const posts = String(body.posts || "").split(/\s+/)
+          .map((u) => u.trim().match(/^https:\/\/(www\.)?instagram\.com\/(p|reel)\/([A-Za-z0-9_-]+)/))
+          .filter(Boolean).map((m) => `https://www.instagram.com/${m[2]}/${m[3]}/`).slice(0, 9);
+        await store.setSetting("instagram", posts);
+        return json({ ok: true, posts });
+      }
+
+      if (path === "/api/admin/stats") {
+        const from = url.searchParams.get("from"), to = url.searchParams.get("to");
+        if (!isDate(from) || !isDate(to)) return json({ error: "Bad dates" }, 400);
+        const now = londonNow();
+        const rows = mine(await store.range(from, to)).map((b) => ({
+          staff: b.staff, treatment: b.treatment, date: b.date, time: toTime(b.start), status: b.status,
+          deposit: b.deposit, refunded: b.refunded, email: b.email, created: b.created,
+        }));
+        return json({ from, to, today: now.date, now: now.time, bookings: rows });
       }
 
       if (path === "/api/admin/upcoming") {

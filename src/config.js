@@ -43,3 +43,29 @@ export const HOURS = [
   { open: "10:00", close: "18:00" }, // Friday
   { open: "09:00", close: "15:00" }, // Saturday
 ];
+
+// Prices shown on the website. PLACEHOLDERS: confirm real prices with Lucy.
+// Use "From £..." for anything that varies.
+export const PRICES = {
+  "Anti wrinkle injections": "From £150",
+  "Dermal fillers": "From £180",
+  "Skin boosters": "From £200",
+  "Gummy smile treatment": "£100",
+  "Filler dissolve": "From £100",
+  "Polynucleotides": "£180 per session",
+  "Chemical peel": "From £75",
+  "Microneedling": "From £150",
+  "Medical facial": "From £75",
+  "Medi Facial": "£75",
+  "Bright and Even Peel": "£85",
+  "Deep Pore Peel": "£85",
+  "Pigment Correct Peel": "£95",
+  "NoPeel Peel": "£75",
+  "Microneedling Facial": "£120",
+  "Nurturing Facial": "£70",
+  "Pregnancy safe facial": "£70",
+  "Consultation": "£25, taken off your treatment",
+  "Membership consultation": "£25 deposit",
+  "Skin consultation": "£10, taken off your treatment",
+  "Group consultation": "Free",
+};
