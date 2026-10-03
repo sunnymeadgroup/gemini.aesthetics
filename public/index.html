@@ -387,7 +387,7 @@
         <div class="rv">
           <span class="eyebrow">About</span>
           <h2>Hi, I'm Lucy.</h2>
-          <p>I qualified as a nurse at Northumbria University in 2018 and spent seven years in the NHS before dedicating myself fully to the clinic. Alongside nursing I trained in advanced facial aesthetics for six years, building the skills and judgement that every treatment here is based on.</p>
+          <p id="aboutIntro">I qualified as a nurse at Northumbria University in 2018 and spent seven years in the NHS before dedicating myself fully to the clinic. Alongside nursing I trained in advanced facial aesthetics for six years, building the skills and judgement that every treatment here is based on.</p>
           <p class="quote">"I've always had a passion for caring for others and making people feel their best."</p>
           <p>Gemini is about enhancing what you already have. Personalised, medically led treatments, honest advice, and your wellbeing and confidence put first.</p>
         </div>
@@ -827,6 +827,17 @@
         if (card) {
           if (p.photo) card.querySelector('.av').innerHTML = '<img src="' + p.photo + '" alt="' + p.name + '">';
           if (p.bio) card.querySelector('p').textContent = p.bio;
+        }
+        // Only Lucy: her description becomes the main About text, and the small card is hidden
+        if (r.practitioners.length === 1) {
+          var team = document.querySelector('.team'); if (team) team.style.display = 'none';
+          var intro = $('aboutIntro');
+          if (p.bio && intro) {
+            var paras = p.bio.split(/\n+/).map(function (t) { return t.trim(); }).filter(Boolean);
+            var frag = document.createDocumentFragment();
+            paras.forEach(function (t) { var el = document.createElement('p'); el.textContent = t; frag.appendChild(el); });
+            intro.replaceWith(frag);
+          }
         }
         var choice = document.querySelector('#whoChoices [data-v="' + p.name + '"] .av');
         if (choice && p.photo) choice.innerHTML = '<img src="' + p.photo + '" alt="">';
